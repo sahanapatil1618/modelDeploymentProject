@@ -46,16 +46,17 @@ transform = transforms.Compose([
 
  
 classes = [
+    "bird",
+    "bus",
+    "car",
     "cat",
     "dog",
-    "tiger",
-    "lion",
     "elephant",
     "horse",
-    "bird",
-    "car",
-    "truck",
-    "bus"
+    "lion",
+    "tiger",
+    "truck"
+    
 ]
 
 
@@ -93,6 +94,8 @@ async def predict(file: UploadFile = File(...)):
             output,
             dim=1
         ).item()
+
+        print("Prediction index:", prediction)
 
 
     predicted_class = classes[prediction]
