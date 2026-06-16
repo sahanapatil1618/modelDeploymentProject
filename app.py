@@ -1,61 +1,104 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, File, UploadFile
 from PIL import Image
 import torch
+import torch.nn as nn
 from torchvision import models, transforms
-from torchvision.models import ResNet18_Weights
+import io
 
 
-app = FastAPI()
-
-
-# Load model
-model = models.resnet18(weights=None)
-
-model.load_state_dict(
-    torch.load("model.pth", map_location=torch.device("cpu"))
+ 
+app = FastAPI(
+    title="Image Classification API",
+    description="Deep Learning Model Deployment using FastAPI and Docker",
+    version="1.0"
 )
 
+
+ 
+model = models.resnet18(weights=None)
+
+ 
+model.fc = nn.Linear(512, 10)
+
+
+ 
+model.load_state_dict(
+    torch.load(
+        "model.pth",
+        map_location=torch.device("cpu")
+    )
+)
+
+ 
 model.eval()
 
 
-# Load class names
-weights = ResNet18_Weights.DEFAULT
-categories = weights.meta["categories"]
-
-
-# Image preprocessing
+ 
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
-    transforms.ToTensor()
+    transforms.ToTensor(),
+    transforms.Normalize(
+        mean=[0.485, 0.456, 0.406],
+        std=[0.229, 0.224, 0.225]
+    )
 ])
 
 
+ 
+classes = [
+    "class1",
+    "class2",
+    "class3",
+    "class4",
+    "class5",
+    "class6",
+    "class7",
+    "class8",
+    "class9",
+    "class10"
+]
+
+
+ 
 @app.get("/")
 def home():
     return {
-        "message": "Image Classification API is Running"
+        "message": "Image Classification API is running"
     }
 
 
+ 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
 
-    image = Image.open(file.file).convert("RGB")
+     
+    image = Image.open(
+        io.BytesIO(await file.read())
+    ).convert("RGB")
 
-    input_tensor = transform(image)
 
-    input_batch = input_tensor.unsqueeze(0)
+     
+    image_tensor = transform(image)
+
+     
+    image_tensor = image_tensor.unsqueeze(0)
 
 
+     
     with torch.no_grad():
-        output = model(input_batch)
+
+        output = model(image_tensor)
+
+        prediction = torch.argmax(
+            output,
+            dim=1
+        ).item()
 
 
-    predicted_class = torch.argmax(output, dim=1).item()
-
-    prediction = categories[predicted_class]
+    predicted_class = classes[prediction]
 
 
     return {
-        "prediction": prediction
-    }
+        "filename": file.filename,
+        "prediction": predicted_class
+    } is this correct
