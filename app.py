@@ -101,4 +101,4 @@ async def predict(file: UploadFile = File(...)):
     return {
         "filename": file.filename,
         "prediction": predicted_class
-    } is this correct
+    } 
